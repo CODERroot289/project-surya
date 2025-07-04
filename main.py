@@ -86,6 +86,10 @@ class ReceiptPreview(QDialog):
         self.text_edit = QTextEdit()
         self.text_edit.setText(receipt_text)
         self.text_edit.setReadOnly(True)
+        self.text_edit.setLineWrapMode(QTextEdit.NoWrap)
+        self.text_edit.setAcceptRichText(False)
+
+
 
         self.print_btn = QPushButton("🖨️ Print Receipt")
         self.print_btn.clicked.connect(self.print_receipt)
@@ -684,18 +688,32 @@ QTableWidget::item:hover {{
         if self.table.currentRow() <len(self.df):
             print(self.df.iloc[self.table.currentRow()])
             # print()
-            self.r = ReceiptPreview(self.generate_receipt_text(self.df.iloc[self.table.currentRow()]))
-            self.r.show()
+            # self.r = ReceiptPreview(self.generate_receipt_text(self.df.iloc[self.table.currentRow()]))
+            self.r =self.generate_receipt_text(self.df.iloc[self.table.currentRow()])
+            self.print_receipt()
+    def print_receipt(self):
+        text = self.r
+        try:
+            with tempfile.NamedTemporaryFile("w", delete=False, suffix=".txt", encoding="utf-8") as f:
+                f.write(text)
+                filename = f.name
+
+            os.startfile(filename, "print") 
+        except Exception as e:
+            QMessageBox.critical(self, "Print Error", str(e))
+            # self.r.show()
 
     def generate_receipt_text(self,data):
         lines = []
         lines.append("____")
         s = f'{data["Name"]}\t{data["nakshatram"]}\t{data["pooja"]}\t{data["cost"]}'
+        print(s.index(s.split()[1])-1)
         lines.append(f"Reg no:{self.table.currentRow()}")
         lines.append(f"Date: {self.filename[:-4]}")
-        d =(len(s)+int((len(s)*(1/5))))
+        r ="\t".join(["പേര്"+(" "*(s.index(s.split()[1])-1-len("പേര്"))), "നക്ഷത്രം"+(" "*(s.index(s.split()[2])-1-len("നക്ഷത്രം"))), "പൂജകൾ"+(" "*(s.index(s.split()[3])-1-len("പൂജകൾ"))),"തുക"])
+        d =(len(r)+int((len(r)*(1/5))))
         lines.append("=" * d)
-        lines.append("\t".join(["പേര്", "നക്ഷത്രം", "പൂജകൾ","തുക"]))
+        lines.append(r)
 
         lines.append("=" * d)
         total = 0
@@ -708,13 +726,13 @@ QTableWidget::item:hover {{
         #     total += amount
         #     lines.append(f"{name:<10} x{qty:<2} @₹{price:<4} = ₹{amount}")
         # lines.append("=" * d)
-        lines.append("--" * d)
+        lines.append("-" * d)
         # lines.append(f"Subtotal: ₹{total}")
         # tax_amount = total * data['tax'] / 100
         # lines.append(f"Tax ({data['tax']}%): ₹{tax_amount:.2f}")
         # grand_total = total + tax_amount
         lines.append(f'Total: ₹{int(data["cost"][:-1]):.2f}')
-        lines.append("--" * d)
+        lines.append("-" * d)
         lines.append("Thank you.")
         return "\n".join(lines)
     def on_dropdown_change(self, text,r):

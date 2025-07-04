@@ -106,6 +106,7 @@ QTabBar::tab:hover {
       </property>
       <property name="font">
        <font>
+        <family>Noto Sans Malayalam</family>
         <pointsize>8</pointsize>
        </font>
       </property>
